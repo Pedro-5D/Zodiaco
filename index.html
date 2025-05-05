@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta Astral con Estrellas Fijas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .chart-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .controls-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .info-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .wheel-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            aspect-ratio: 1/1;
+            margin: 0 auto;
+        }
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+        .planet-symbol {
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .aspect-line {
+            cursor: pointer;
+        }
+        .tooltip-custom {
+            position: absolute;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .dignity-domicilio {
+            color: #00AA00;
+            font-weight: bold;
+        }
+        .dignity-exaltacion {
+            color: #4444FF;
+            font-weight: bold;
+        }
+        .dignity-peregrino {
+            color: #888888;
+        }
+        .dignity-caida {
+            color: #AA5500;
+            font-weight: bold;
+        }
+        .dignity-exilio {
+            color: #AA0000;
+            font-weight: bold;
+        }
+        /* Styles for retrograde and stationary symbols */
+        .retrograde {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .stationary-retrograde {
+            color: #fd7e14;
+            font-weight: bold;
+        }
+        .stationary-direct {
+            color: #20c997;
+            font-weight: bold;
+        }
+        /* Estilos para estrellas fijas */
+        .fixed-stars-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stars-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .star-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            border-left: 3px solid #FFD700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .star-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .star-item.selected {
+            background-color: #fff9e5;
+            border-left-width: 5px;
+        }
+        
+        .star-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .star-symbol {
+            color: #FFD700;
+            text-shadow: 0 0 2px #000;
+            margin-right: 5px;
+        }
+        
+        .star-details {
+            font-size: 0.9em;
+            margin-left: 20px;
+        }
+        
+        .star-interpretation {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #e9e9e9;
+        }
+        
+        .physical-plane, .astral-plane {
+            margin-top: 5px;
+        }
+        
+        .plane-title {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        /* Estilos para indicadores de estrellas en la rueda */
+        .star-point {
+            fill: #FFD700;
+            stroke: #000;
+            stroke-width: 0.5;
+            cursor: pointer;
+        }
+        
+        .star-point:hover {
+            fill: #FFC800;
+            transform: scale(1.2);
+        }
+        
+        .star-point.selected {
+            fill: #FF9900;
+            stroke-width: 1;
+        }
+        
+        .star-label {
+            font-size: 8px;
+            font-weight: bold;
+            pointer-events: none;
+        }
+        
+        .header-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #1a237e;
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            padding: 10px 0;
+            border-bottom: 2px solid #3949ab;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="header-title">Carta Astral con Estrellas Fijas</h1>
+        
+        <div class="loading" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+        </div>
+        
+        <!-- Formulario de entrada -->
+        <div class="controls-container mb-4">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="city" class="form-label">Ciudad de Nacimiento</label>
+                        <input type="text" class="form-control" id="city" placeholder="Ej: Madrid, España" list="cityList">
+                        <datalist id="cityList"></datalist>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Fecha de Nacimiento</label>
+                        <input type="date" class="form-control" id="date">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="time" class="form-label">Hora de Nacimiento</label>
+                        <input type="time" class="form-control" id="time">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de tránsitos -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="showTransits" checked>
+                        <label class="form-check-label" for="showTransits">Mostrar Tránsitos</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="calculateAnalysis" checked>
+                        <label class="form-check-label" for="calculateAnalysis">Análisis Avanzado</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="includeStars" checked>
+                        <label class="form-check-label" for="includeStars">Incluir Estrellas Fijas</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Toggle para zodiaco sideral -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="useSiderealZodiac">
+                        <label class="form-check-label" for="useSiderealZodiac">Zodiaco Sideral (Fagan-Allen, 24° 15')</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="transitsContainer">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="transitCity" class="form-label">Ciudad de Tránsito</label>
+                            <input type="text" class="form-control" id="transitCity" placeholder="Ej: Madrid, España" list="transitCityList">
+                            <datalist id="transitCityList"></datalist>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="transitDate" class="form-label">Fecha de Tránsito</label>
+                            <input type="date" class="form-control" id="transitDate">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="transitTime" class="form-label">Hora de Tránsito</label>
+                            <input type="time" class="form-control" id="transitTime">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button class="btn btn-primary" id="calculateBtn">Calcular Carta Astral</button>
+            </div>
+
+            <div class="alert alert-danger mt-3 d-none" id="errorAlert" role="alert"></div>
+            <div class="alert alert-info mt-3 d-none" id="infoBox">
+                <span id="ascendenteInfo"></span><br>
+                <span id="birthTypeInfo"></span><br>
+                <span id="zodiacTypeInfo"></span>
+            </div>
+        </div>
+        
+        <div class="row" id="chartContent" style="display: none;">
+            <!-- Rueda Zodiacal -->
+            <div class="col-md-8">
+                <div class="chart-container">
+                    <div class="wheel-container">
+                        <svg id="chartSvg" class="chart-svg" viewBox="0 0 600 600"></svg>
+                        <div id="chartTooltip" class="tooltip-custom" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información y Aspectos -->
+            <div class="col-md-4">
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="planets-tab" data-bs-toggle="tab" data-bs-target="#planets" type="button" role="tab" aria-controls="planets" aria-selected="true">Planetas</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="aspects-tab" data-bs-toggle="tab" data-bs-target="#aspects" type="button" role="tab" aria-controls="aspects" aria-selected="false">Aspectos</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="stars-tab" data-bs-toggle="tab" data-bs-target="#stars" type="button" role="tab" aria-controls="stars" aria-selected="false">Estrellas Fijas</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false">Avanzado</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <!-- Pestaña de Planetas -->
+                    <div class="tab-pane fade show active" id="planets" role="tabpanel" aria-labelledby="planets-tab">
+                        <h4>Carta Natal</h4>
+                        <div id="natalPlanets"></div>
+                        
+                        <h4 class="mt-4">Tránsitos</h4>
+                        <div id="transitPlanets"></div>
+                    </div>
+                    
+                    <!-- Pestaña de Aspectos -->
+                    <div class="tab-pane fade" id="aspects" role="tabpanel" aria-labelledby="aspects-tab">
+                        <h4>Aspectos Internos</h4>
+                        <div id="internalAspects"></div>
+
+                        <h4 class="mt-4">Aspectos entre Cartas</h4>
+                        <div id="interChartAspects"></div>
+                    </div>
+                    
+                    <!-- Pestaña de Estrellas Fijas -->
+                    <div class="tab-pane fade" id="stars" role="tabpanel" aria-labelledby="stars-tab">
+                        <h4>Estrellas Fijas Activas</h4>
+                        <div id="fixedStarsContainer">
+                            <div class="alert alert-info">
+                                Calculando estrellas fijas...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pestaña de Avanzado -->
+                    <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
+                        <h4>Enlaces Planetarios</h4>
+                        <div id="enlacesPlanetarios"></div>
+                        
+                        <h4 class="mt-4">Picos</h4>
+                        <div>
+                            <h5>Pico Mayor</h5>
+                            <div id="picoMayor"></div>
+                            
+                            <h5 class="mt-3">Pico Moderado</h5>
+                            <div id="picoModerado"></div>
+                            
+                            <h5 class="mt-3">Pico Menor</h5>
+                            <div id="picoMenor"></div>
+                        </div>
+                        
+                        <h4 class="mt-4">Liberación de Enlace</h4>
+                        <div id="liberacionEnlace"></div>
+                        
+                        <h4 class="mt-4">Presagios</h4>
+                        <div id="presagios"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
