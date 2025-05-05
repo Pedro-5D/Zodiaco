@@ -243,6 +243,70 @@ let ascendenteName = '';
 let birthDate = null;
 let apiBaseUrl = "";  // Reemplazar con la URL correcta del backend si es necesario
 
+// Constantes para dignidades planetarias según izarren.top (del server.py)
+const DIGNIDADES = {
+    'SOL': {
+        'domicilio': ['ESCORPIO', 'GÉMINIS', 'PEGASO'], 
+        'exaltacion': ['LEO', 'ARIES', 'CAPRICORNIO', 'VIRGO'], 
+        'caida': ['CÁNCER', 'PISCIS', 'LIBRA', 'ACUARIO', 'OFIUCO'], 
+        'exilio': ['TAURO', 'SAGITARIO']
+    },
+    'LUNA': {
+        'domicilio': ['TAURO', 'SAGITARIO'], 
+        'exaltacion': ['CÁNCER', 'PISCIS', 'LIBRA', 'ACUARIO', 'OFIUCO'], 
+        'caida': ['LEO', 'ARIES', 'CAPRICORNIO', 'VIRGO'], 
+        'exilio': ['ESCORPIO', 'GÉMINIS', 'PEGASO']
+    },
+    'MERCURIO': {
+        'domicilio': ['LEO', 'ARIES', 'ESCORPIO', 'PEGASO'], 
+        'exaltacion': ['GÉMINIS', 'CAPRICORNIO', 'VIRGO'], 
+        'caida': ['TAURO', 'LIBRA', 'ACUARIO', 'OFIUCO'], 
+        'exilio': ['CÁNCER', 'PISCIS', 'SAGITARIO']
+    },
+    'VENUS': {
+        'domicilio': ['CÁNCER', 'PISCIS', 'SAGITARIO'], 
+        'exaltacion': ['TAURO', 'LIBRA', 'ACUARIO', 'OFIUCO'], 
+        'caida': ['GÉMINIS', 'CAPRICORNIO', 'VIRGO'], 
+        'exilio': ['LEO', 'ARIES', 'ESCORPIO', 'PEGASO']
+    },
+    'MARTE': {
+        'domicilio': ['GÉMINIS', 'CAPRICORNIO', 'VIRGO'], 
+        'exaltacion': ['LEO', 'ARIES', 'ESCORPIO', 'PEGASO'], 
+        'caida': ['CÁNCER', 'PISCIS', 'SAGITARIO'], 
+        'exilio': ['TAURO', 'LIBRA', 'ACUARIO', 'OFIUCO']
+    },
+    'JÚPITER': {
+        'domicilio': ['TAURO', 'LIBRA', 'ACUARIO', 'OFIUCO'], 
+        'exaltacion': ['CÁNCER', 'PISCIS', 'SAGITARIO'], 
+        'caida': ['LEO', 'ARIES', 'ESCORPIO', 'PEGASO'], 
+        'exilio': ['GÉMINIS', 'CAPRICORNIO', 'VIRGO']
+    },
+    'SATURNO': {
+        'domicilio': ['LEO', 'ARIES', 'LIBRA', 'ACUARIO'], 
+        'exaltacion': ['OFIUCO', 'GÉMINIS'], 
+        'caida': ['TAURO', 'ESCORPIO', 'PEGASO'], 
+        'exilio': ['CÁNCER', 'PISCIS', 'CAPRICORNIO', 'VIRGO']
+    },
+    'URANO': {
+        'domicilio': ['LEO', 'ARIES', 'ESCORPIO', 'PEGASO'], 
+        'exaltacion': ['GÉMINIS', 'CAPRICORNIO', 'VIRGO'], 
+        'caida': ['TAURO', 'LIBRA', 'ACUARIO', 'OFIUCO'], 
+        'exilio': ['CÁNCER', 'PISCIS', 'SAGITARIO']
+    },
+    'NEPTUNO': {
+        'domicilio': ['TAURO', 'LIBRA', 'ACUARIO', 'OFIUCO'], 
+        'exaltacion': ['CÁNCER', 'PISCIS', 'SAGITARIO'], 
+        'caida': ['LEO', 'ARIES', 'ESCORPIO', 'PEGASO'], 
+        'exilio': ['GÉMINIS', 'CAPRICORNIO', 'VIRGO']
+    },
+    'PLUTÓN': {
+        'domicilio': ['GÉMINIS', 'CAPRICORNIO', 'VIRGO'], 
+        'exaltacion': ['LEO', 'ARIES', 'ESCORPIO', 'PEGASO'], 
+        'caida': ['CÁNCER', 'PISCIS', 'SAGITARIO'], 
+        'exilio': ['TAURO', 'LIBRA', 'ACUARIO', 'OFIUCO']
+    }
+};
+
 // Variables para análisis avanzado
 window.pico_mayor = [];
 window.pico_moderado = [];
@@ -2107,25 +2171,14 @@ function mockCalculatePositions(is_natal=true, asc_sign=null, asc_longitude=null
 function calcularDignidadPlanetaria(planeta, longitud) {
     const signo = getSign(longitud);
     
-    // Simplificado para demo
-    const dignidades = {
-        'SOL': { 'domicilio': ['LEO'], 'exaltacion': ['ARIES'], 'caida': ['LIBRA'], 'exilio': ['AQUARIUS'] },
-        'LUNA': { 'domicilio': ['CANCER'], 'exaltacion': ['TAURUS'], 'caida': ['SCORPIO'], 'exilio': ['CAPRICORN'] },
-        'MERCURIO': { 'domicilio': ['GEMINI', 'VIRGO'], 'exaltacion': ['VIRGO'], 'caida': ['PISCES'], 'exilio': ['SAGITTARIUS', 'PISCES'] },
-        'VENUS': { 'domicilio': ['TAURUS', 'LIBRA'], 'exaltacion': ['PISCES'], 'caida': ['VIRGO'], 'exilio': ['SCORPIO', 'ARIES'] },
-        'MARTE': { 'domicilio': ['ARIES', 'SCORPIO'], 'exaltacion': ['CAPRICORN'], 'caida': ['CANCER'], 'exilio': ['TAURUS', 'LIBRA'] },
-        'JÚPITER': { 'domicilio': ['SAGITTARIUS', 'PISCES'], 'exaltacion': ['CANCER'], 'caida': ['CAPRICORN'], 'exilio': ['GEMINI', 'VIRGO'] },
-        'SATURNO': { 'domicilio': ['CAPRICORN', 'AQUARIUS'], 'exaltacion': ['LIBRA'], 'caida': ['ARIES'], 'exilio': ['CANCER', 'LEO'] }
-    };
-    
-    if (planeta in dignidades) {
-        if (dignidades[planeta]['domicilio'].includes(signo)) {
+    if (planeta in DIGNIDADES) {
+        if (DIGNIDADES[planeta]['domicilio'].includes(signo)) {
             return "domicilio";
-        } else if (dignidades[planeta]['exaltacion'].includes(signo)) {
+        } else if (DIGNIDADES[planeta]['exaltacion'].includes(signo)) {
             return "exaltacion";
-        } else if (dignidades[planeta]['caida'].includes(signo)) {
+        } else if (DIGNIDADES[planeta]['caida'].includes(signo)) {
             return "caida";
-        } else if (dignidades[planeta]['exilio'].includes(signo)) {
+        } else if (DIGNIDADES[planeta]['exilio'].includes(signo)) {
             return "exilio";
         }
     }
@@ -2138,3 +2191,4 @@ window.handleCitySearch = handleCitySearch;
 window.calculateChart = calculateChart;
 window.handleStarClick = handleStarClick;
 window.openStarLink = openStarLink;
+calcularDignidadPlanetaria
