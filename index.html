@@ -834,191 +834,193 @@
             // Coordenadas por defecto si no se encuentra (Madrid)
             return { lat: 40.416, lon: -3.703 };
         }
-		// Función para calcular la carta astral
-        function calculateChart() {
-            // Validar entradas
-            if (!cityInput.value || !dateInput.value || !timeInput.value) {
-                showError("Debes ingresar ciudad, fecha y hora para la carta natal.");
-                return;
-            }
+// Función corregida para calcular la carta astral
+function calculateChart() {
+    // Validar entradas
+    if (!cityInput.value || !dateInput.value || !timeInput.value) {
+        showError("Debes ingresar ciudad, fecha y hora para la carta natal.");
+        return;
+    }
+    
+    if (showTransitsToggle.checked && (!transitCityInput.value || !transitDateInput.value || !transitTimeInput.value)) {
+        showError("Debes ingresar ciudad, fecha y hora para los tránsitos.");
+        return;
+    }
+    
+    // Mostrar loading
+    loadingIndicator.style.display = 'flex';
+    hideError();
+    
+    // Obtener coordenadas de la ciudad seleccionada
+    const natalCoords = getSelectedCityCoordinates(cityInput, cityList);
+    
+    console.log("Calculando carta astral...");
+    console.log("Datos natal:", {
+        city: cityInput.value,
+        date: dateInput.value,
+        time: timeInput.value,
+        lat: natalCoords.lat,
+        lon: natalCoords.lon
+    });
+    
+    // Guardar fecha de nacimiento para uso posterior
+    birthDate = dateInput.value;
+    window.birthDate = birthDate;
+    
+    // Obtener el estado del toggle del zodiaco sideral
+    const useSiderealZodiac = document.getElementById('useSiderealZodiac').checked;
+    console.log("Usando zodiaco sideral:", useSiderealZodiac);
+    
+    // Calcular carta natal - Incluir coordenadas y zodiaco en la solicitud
+    const natalData = {
+        city: cityInput.value,
+        date: dateInput.value,
+        time: timeInput.value,
+        lat: natalCoords.lat,
+        lon: natalCoords.lon,
+        calculateAnalysis: calculateAnalysisToggle.checked,
+        useSidereal: useSiderealZodiac,
+        includeStars: true  // Solicitar datos de estrellas fijas
+    };
+
+    fetch('/calculate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(natalData)
+    })
+    .then(response => {
+        console.log("Respuesta recibida:", response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log("Datos de la carta natal:", data);
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Guardar datos básicos
+        natalPlanets = data.positions;
+        window.natalPlanets = natalPlanets;
+        internalAspects = data.aspects;
+        
+        // Guardar resultados de análisis avanzado si están disponibles
+        if (data.enlaces) enlaces = data.enlaces;
+        if (data.pico_mayor) window.pico_mayor = data.pico_mayor;
+        if (data.pico_moderado) window.pico_moderado = data.pico_moderado;
+        if (data.pico_menor) window.pico_menor = data.pico_menor;
+        if (data.liberacion_enlace) window.liberacion_enlace = data.liberacion_enlace;
+        if (data.presagios) window.presagios = data.presagios;
+        
+        isDry = data.isDry;
+        window.isDry = isDry;
+        
+        // Guardar sistema de zodiaco
+        window.zodiacSystem = data.zodiacSystem || "tropical";
+        
+        // Procesar estrellas fijas si están disponibles
+        if (data.stars && data.stars.active_stars) {
+            activeStars = processStarData(data.stars.active_stars, data.stars.positions);
+        }
+        
+        // Mostrar información del ascendente
+        const ascPlanet = natalPlanets.find(p => p.name === 'ASC');
+        if (ascPlanet) {
+            ascendenteName = ascPlanet.sign;
+            window.ascendenteName = ascendenteName;
+            showBirthInfo(ascPlanet.sign, isDry);
+        }
+
+        // Si hay tránsitos, calcularlos también
+        if (showTransitsToggle.checked) {
+            console.log("Calculando tránsitos...");
             
-            if (showTransitsToggle.checked && (!transitCityInput.value || !transitDateInput.value || !transitTimeInput.value)) {
-                showError("Debes ingresar ciudad, fecha y hora para los tránsitos.");
-                return;
-            }
+            // Obtener coordenadas de la ciudad de tránsito
+            const transitCoords = getSelectedCityCoordinates(transitCityInput, transitCityList);
             
-            // Mostrar loading
-            loadingIndicator.style.display = 'flex';
-            hideError();
-            
-            // Obtener coordenadas de la ciudad seleccionada
-            const natalCoords = getSelectedCityCoordinates(cityInput, cityList);
-            
-            console.log("Calculando carta astral...");
-            console.log("Datos natal:", {
-                city: cityInput.value,
-                date: dateInput.value,
-                time: timeInput.value,
-                lat: natalCoords.lat,
-                lon: natalCoords.lon
+            console.log("Datos tránsito:", {
+                city: transitCityInput.value,
+                date: transitDateInput.value,
+                time: transitTimeInput.value,
+                lat: transitCoords.lat,
+                lon: transitCoords.lon
             });
             
-            // Guardar fecha de nacimiento para uso posterior
-            birthDate = dateInput.value;
-            window.birthDate = birthDate;
-            
-            // Obtener el estado del toggle del zodiaco sideral
-            const useSiderealZodiac = document.getElementById('useSiderealZodiac').checked;
-            console.log("Usando zodiaco sideral:", useSiderealZodiac);
-            
-            // Calcular carta natal - Incluir coordenadas y zodiaco en la solicitud
-            const natalData = {
-                city: cityInput.value,
-                date: dateInput.value,
-                time: timeInput.value,
-                lat: natalCoords.lat,
-                lon: natalCoords.lon,
-                calculateAnalysis: calculateAnalysisToggle.checked,
-                useSidereal: useSiderealZodiac,
-                includeStars: true  // Solicitar datos de estrellas fijas
-            };
-			fetch('/calculate', {
+            return fetch('/calculate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(natalData)
+                body: JSON.stringify({
+                    city: transitCityInput.value,
+                    date: transitDateInput.value,
+                    time: transitTimeInput.value,
+                    lat: transitCoords.lat,
+                    lon: transitCoords.lon,
+                    calculateAnalysis: calculateAnalysisToggle.checked,
+                    useSidereal: useSiderealZodiac,
+                    includeStars: true
+                })
             })
-            .then(response => {
-                console.log("Respuesta recibida:", response.status);
-                return response.json();
+            .then(transitResponse => {
+                console.log("Respuesta de tránsitos recibida:", transitResponse.status);
+                return transitResponse.json();
             })
-            .then(data => {
-                console.log("Datos de la carta natal:", data);
+            .then(transitData => {
+                console.log("Datos de tránsitos:", transitData);
                 
-                if (data.error) {
-                    throw new Error(data.error);
+                if (transitData.error) {
+                    throw new Error(transitData.error);
                 }
                 
-                // Guardar datos básicos
-                natalPlanets = data.positions;
-                window.natalPlanets = natalPlanets;
-                internalAspects = data.aspects;
+                transitPlanets = transitData.positions;
                 
-                // Guardar resultados de análisis avanzado si están disponibles
-                if (data.enlaces) enlaces = data.enlaces;
-                if (data.pico_mayor) window.pico_mayor = data.pico_mayor;
-                if (data.pico_moderado) window.pico_moderado = data.pico_moderado;
-                if (data.pico_menor) window.pico_menor = data.pico_menor;
-                if (data.liberacion_enlace) window.liberacion_enlace = data.liberacion_enlace;
-                if (data.presagios) window.presagios = data.presagios;
-                
-                isDry = data.isDry;
-                window.isDry = isDry;
-                
-                // Guardar sistema de zodiaco
-                window.zodiacSystem = data.zodiacSystem || "tropical";
-                
-                // Procesar estrellas fijas si están disponibles
-                if (data.stars && data.stars.active_stars) {
-                    activeStars = processStarData(data.stars.active_stars, data.stars.positions);
+                // Actualizar estrellas activas con los datos de tránsito
+                if (transitData.stars && transitData.stars.active_stars) {
+                    activeStars = processStarData(transitData.stars.active_stars, transitData.stars.positions);
                 }
                 
-                // Mostrar información del ascendente
-                const ascPlanet = natalPlanets.find(p => p.name === 'ASC');
-                if (ascPlanet) {
-                    ascendenteName = ascPlanet.sign;
-                    window.ascendenteName = ascendenteName;
-                    showBirthInfo(ascPlanet.sign, isDry);
+                // Calcular aspectos entre cartas
+                interChartAspects = calculateAspects(natalPlanets, transitPlanets);
+                
+                // Renderizar carta completa
+                renderChart();
+                
+                // Mostrar Fardarias
+                mostrarFardariasEnAvanzado();
+                
+                // Calcular predicciones si está activado
+                if (calculatePredictionsToggle.checked) {
+                    calculatePredictions();
                 }
-				// Si hay tránsitos, calcularlos también
-                if (showTransitsToggle.checked) {
-                    console.log("Calculando tránsitos...");
-                    
-                    // Obtener coordenadas de la ciudad de tránsito
-                    const transitCoords = getSelectedCityCoordinates(transitCityInput, transitCityList);
-                    
-                    console.log("Datos tránsito:", {
-                        city: transitCityInput.value,
-                        date: transitDateInput.value,
-                        time: transitTimeInput.value,
-                        lat: transitCoords.lat,
-                        lon: transitCoords.lon
-                    });
-                    
-                    fetch('/calculate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            city: transitCityInput.value,
-                            date: transitDateInput.value,
-                            time: transitTimeInput.value,
-                            lat: transitCoords.lat,
-                            lon: transitCoords.lon,
-                            calculateAnalysis: calculateAnalysisToggle.checked,
-                            useSidereal: useSiderealZodiac,
-                            includeStars: true
-                        })
-                    })
-                    .then(transitResponse => {
-                        console.log("Respuesta de tránsitos recibida:", transitResponse.status);
-                        return transitResponse.json();
-                    })
-                    .then(transitData => {
-                        console.log("Datos de tránsitos:", transitData);
-                        
-                        if (transitData.error) {
-                            throw new Error(transitData.error);
-                        }
-                        
-                        transitPlanets = transitData.positions;
-                        
-                        // Actualizar estrellas activas con los datos de tránsito
-                        if (transitData.stars && transitData.stars.active_stars) {
-                            activeStars = processStarData(transitData.stars.active_stars, transitData.stars.positions);
-                        }
-                        
-                        // Calcular aspectos entre cartas
-                        interChartAspects = calculateAspects(natalPlanets, transitPlanets);
-                        
-                        // Renderizar carta completa
-                        renderChart();
-                        
-                        // Mostrar Fardarias
-                        mostrarFardariasEnAvanzado();
-                        
-                        // Calcular predicciones si está activado
-                        if (calculatePredictionsToggle.checked) {
-                            calculatePredictions();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error calculando tránsitos:', error);
-                        showError("Error calculando tránsitos: " + error.message);
-                        loadingIndicator.style.display = 'none';
-                    });
-                } else {
-                    transitPlanets = [];
-                    interChartAspects = [];
-                    renderChart();
-                    
-                    // Mostrar Fardarias
-                    mostrarFardariasEnAvanzado();
-                    
-                    // Calcular predicciones si está activado
-                    if (calculatePredictionsToggle.checked) {
-                        calculatePredictions();
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error calculando carta:', error);
-                showError("Error calculando carta: " + error.message);
-                loadingIndicator.style.display = 'none';
             });
+        } else {
+            transitPlanets = [];
+            interChartAspects = [];
+            renderChart();
+            
+            // Mostrar Fardarias
+            mostrarFardariasEnAvanzado();
+            
+            // Calcular predicciones si está activado
+            if (calculatePredictionsToggle.checked) {
+                calculatePredictions();
+            }
+            
+            // Devolver una promesa resuelta para mantener la cadena
+            return Promise.resolve();
         }
+    })
+    .catch(error => {
+        console.error('Error calculando carta:', error);
+        showError("Error calculando carta: " + error.message);
+        // Asegurarse de que el indicador de carga se oculte
+        loadingIndicator.style.display = 'none';
+    });
+}
+
 		// Función para procesar datos de estrellas fijas
         function processStarData(activeStarsData, starPositions) {
             return activeStarsData.map(starData => {
@@ -2975,3 +2977,4 @@
     </script>
 </body>
 </html>
+calculateChart
