@@ -58,7 +58,28 @@ PLANET_DATA = {
     'SATURNO': {'numero': 7}
 }
 
-FAGAN_ALLEN_AYANAMSA = 24.25  # Valor exacto del Ayanamsa Fagan-Allen en 2025 (24° 15')
+# Función para calcular dinámicamente el Ayanamsa Fagan-Allen
+def calculate_fagan_allen_ayanamsa(date):
+    """
+    Calcula el Ayanamsa Fagan-Allen para una fecha dada.
+    date: datetime objeto
+    """
+    # Fecha J2000.0 estándar: 1 enero 2000, 12:00 UTC
+    j2000 = datetime(2000, 1, 1, 12, 0, tzinfo=timezone.utc)
+    # Ayanamsa Fagan-Allen en J2000.0 era aproximadamente 24°
+    ayanamsa_j2000 = 24.0
+    
+    # Calcular años desde J2000.0
+    if not date.tzinfo:
+        date = date.replace(tzinfo=timezone.utc)
+    years_since_j2000 = (date - j2000).total_seconds() / (365.25 * 24 * 60 * 60)
+    
+    # La precesión avanza aprox. 50.3 segundos de arco por año
+    # que es igual a 50.3/3600 = 0.01397 grados por año
+    precession_rate = 0.01397
+    
+    # Ayanamsa actual = Ayanamsa en J2000 + la precesión acumulada
+    return ayanamsa_j2000 + (precession_rate * years_since_j2000)
 
 # Dignidades planetarias
 DIGNIDADES = {
@@ -642,10 +663,12 @@ def calculate_positions_with_utc(utc_datetime, lat=None, lon=None, use_sidereal=
             
             # Si se requiere zodiaco sideral, aplicar corrección
             if use_sidereal:
+                # Calcular Ayanamsa Fagan-Allen para la fecha
+                ayanamsa = calculate_fagan_allen_ayanamsa(utc_datetime)
                 # Guardar la longitud tropical
                 tropical_longitude = longitude
-                # Ajustar por el ayanamsa Fagan-Allen
-                longitude = (longitude - FAGAN_ALLEN_AYANAMSA + 360) % 360
+                # Ajustar por el ayanamsa
+                longitude = (longitude - ayanamsa + 360) % 360
             
             # Calcular posiciones para determinar el movimiento
             pos_before = earth.at(t_before).observe(body).apparent()
@@ -654,7 +677,7 @@ def calculate_positions_with_utc(utc_datetime, lat=None, lon=None, use_sidereal=
             
             if use_sidereal:
                 # Aplicar corrección sideral
-                longitude_before = (longitude_before - FAGAN_ALLEN_AYANAMSA + 360) % 360
+                longitude_before = (longitude_before - ayanamsa + 360) % 360
             
             pos_after = earth.at(t_after).observe(body).apparent()
             lat_after, lon_after, dist_after = pos_after.ecliptic_latlon(epoch='date')
@@ -662,7 +685,7 @@ def calculate_positions_with_utc(utc_datetime, lat=None, lon=None, use_sidereal=
             
             if use_sidereal:
                 # Aplicar corrección sideral
-                longitude_after = (longitude_after - FAGAN_ALLEN_AYANAMSA + 360) % 360
+                longitude_after = (longitude_after - ayanamsa + 360) % 360
             
             # Calcular movimiento diario
             daily_motion_before = (longitude - longitude_before) % 360
@@ -723,10 +746,12 @@ def calculate_positions_with_utc(utc_datetime, lat=None, lon=None, use_sidereal=
             
             # Ajustar ASC y MC si se usa sideral
             if use_sidereal:
+                # Calcular Ayanamsa para la fecha
+                ayanamsa = calculate_fagan_allen_ayanamsa(utc_datetime)
                 tropical_asc = asc
                 tropical_mc = mc
-                asc = (asc - FAGAN_ALLEN_AYANAMSA + 360) % 360
-                mc = (mc - FAGAN_ALLEN_AYANAMSA + 360) % 360
+                asc = (asc - ayanamsa + 360) % 360
+                mc = (mc - ayanamsa + 360) % 360
             
             positions.append({
                 "name": "ASC",
@@ -742,6 +767,23 @@ def calculate_positions_with_utc(utc_datetime, lat=None, lon=None, use_sidereal=
                 "sign": get_sign(mc),
                 "motion_status": "direct", # MC siempre es directo
                 **({"tropical_longitude": tropical_mc, "tropical_sign": get_sign(tropical_mc)} if use_sidereal else {})
+            })
+            
+            # Añadir DSC e IC
+            positions.append({
+                "name": "DSC",
+                "longitude": float((asc + 180) % 360),
+                "sign": get_sign((asc + 180) % 360),
+                "motion_status": "direct",
+                **({"tropical_longitude": (tropical_asc + 180) % 360, "tropical_sign": get_sign((tropical_asc + 180) % 360)} if use_sidereal else {})
+            })
+            
+            positions.append({
+                "name": "IC",
+                "longitude": float((mc + 180) % 360),
+                "sign": get_sign((mc + 180) % 360),
+                "motion_status": "direct",
+                **({"tropical_longitude": (tropical_mc + 180) % 360, "tropical_sign": get_sign((tropical_mc + 180) % 360)} if use_sidereal else {})
             })
             
             # Calcular y añadir Parte de Fortuna y Parte de Espíritu
@@ -856,6 +898,9 @@ def calculate_positions_simulated(utc_datetime, lat=None, lon=None, use_sidereal
         
         positions = []
         
+        # Calcular Ayanamsa si se requiere zodiaco sideral
+        ayanamsa = calculate_fagan_allen_ayanamsa(utc_datetime) if use_sidereal else 0
+        
         for planet_name, base_pos in base_positions.items():
             # Calcular posición actualizada
             rate = daily_rates.get(planet_name, 0)
@@ -882,7 +927,7 @@ def calculate_positions_simulated(utc_datetime, lat=None, lon=None, use_sidereal
             # Ajustar para zodiaco sideral si es necesario
             if use_sidereal:
                 tropical_longitude = longitude
-                longitude = (longitude - FAGAN_ALLEN_AYANAMSA + 360) % 360
+                longitude = (longitude - ayanamsa + 360) % 360
             
             # Obtener signo y dignidad
             sign = get_sign(longitude)
@@ -940,8 +985,8 @@ def calculate_positions_simulated(utc_datetime, lat=None, lon=None, use_sidereal
             if use_sidereal:
                 tropical_asc = asc
                 tropical_mc = mc
-                asc = (asc - FAGAN_ALLEN_AYANAMSA + 360) % 360
-                mc = (mc - FAGAN_ALLEN_AYANAMSA + 360) % 360
+                asc = (asc - ayanamsa + 360) % 360
+                mc = (mc - ayanamsa + 360) % 360
                 
                 positions.append({
                     "name": "ASC",
@@ -1477,6 +1522,9 @@ def calculate():
                                 "interpretation": aspect_interp
                             })
             
+            # Calcular Ayanamsa para incluirlo en la respuesta
+            ayanamsa = calculate_fagan_allen_ayanamsa(utc_datetime) if use_sidereal else 0
+            
             # Construir respuesta
             response = {
                 "positions": positions,
@@ -1491,7 +1539,8 @@ def calculate():
                 "aspects": aspects,
                 "interpretations": interpretations,
                 "isDry": isDry,
-                "zodiacSystem": "sidereal" if use_sidereal else "tropical"
+                "zodiacSystem": "sidereal" if use_sidereal else "tropical",
+                "ayanamsa": ayanamsa if use_sidereal else None
             }
             
             return jsonify(response)
