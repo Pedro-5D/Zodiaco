@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta Astral</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/Pedro-5D/Carta-Astral/main/Izarren_6.png" type="image/png">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Cargar Babel sin mostrar advertencia -->
+    <script>
+        // Suprime la advertencia de Babel
+        console.originalWarn = console.warn;
+        console.warn = function(message) {
+            if (message && message.indexOf && message.indexOf('You are using the in-browser Babel transformer') !== -1) {
+                return;
+            }
+            console.originalWarn.apply(console, arguments);
+        };
+    </script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            background: #f5f5f5;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+        
+        .main-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .left-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .right-section {
+            flex: 0 0 350px;
+            margin-left: 20px;
+        }
+        
+        .wheel-container { 
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .wheel-svg {
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            height: auto;
+        }
+        
+        .modern-form {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .toggle-options {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+        }
+
+        .toggle-switch input[type="checkbox"] {
+            height: 0;
+            width: 0;
+            visibility: hidden;
+            position: absolute;
+        }
+
+        .toggle-switch label {
+            cursor: pointer;
+            text-indent: -9999px;
+            width: 50px;
+            height: 25px;
+            background: #ddd;
+            display: block;
+            border-radius: 25px;
+            position: relative;
+            margin-right: 10px;
+        }
+
+        .toggle-switch label:after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 19px;
+            height: 19px;
+            background: #fff;
+            border-radius: 19px;
+            transition: 0.3s;
+        }
+
+        .toggle-switch input:checked + label {
+            background: #007bff;
+        }
+
+        .toggle-switch input:checked + label:after {
+            left: calc(100% - 3px);
+            transform: translateX(-100%);
+        }
+
+        .toggle-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .info-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .info-panel div {
+            margin-bottom: 5px;
+        }
+        
+        .planets-panel {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .planets-column {
+            flex: 1;
+            min-width: 200px;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .planets-column h3 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .aspects-container {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .aspects-container h3 {
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .aspect-list-item {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 4px 0;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .aspect-list-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .planet-list-item {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 4px 0;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .planet-list-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .interpretations-container {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .interpretation-section h3 {
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .interpretation-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .interpretation-title {
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        
+        .interpretation-content {
+            color: #34495e;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #f0f0f0;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 4px;
+        }
+        
+        .star-symbol {
+            color: #FFD700;
+            text-shadow: 0 0 2px #000;
+        }
+        
+        .physical-plane, 
+        .astral-plane {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #e9ecef;
+        }
+        
+        .plane-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        /* Estilos para dignidades y planetas */
+        .dignity-domicilio {
+            color: #00AA00;
+            font-weight: bold;
+        }
+        .dignity-exaltacion {
+            color: #4444FF;
+            font-weight: bold;
+        }
+        .dignity-peregrino {
+            color: #888888;
+        }
+        .dignity-caida {
+            color: #AA5500;
+            font-weight: bold;
+        }
+        .dignity-exilio {
+            color: #AA0000;
+            font-weight: bold;
+        }
+        
+        /* Estilos para retrograde y estacionario */
+        .retrograde {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .stationary-retrograde {
+            color: #fd7e14;
+            font-weight: bold;
+        }
+        .stationary-direct {
+            color: #20c997;
+            font-weight: bold;
+        }
+        
+        /* Estilos para los indicadores de carga */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Estilo para diferenciar carta natal y tránsitos */
+        .natal-planet {
+            stroke-width: 1;
+        }
+        .transit-planet {
+            stroke-width: 1;
+            stroke-dasharray: 2,2;
+        }
+        
+        @media (max-width: 1000px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .right-section {
+                margin-left: 0;
+            }
+            
+            .planets-panel {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+    console.log("Inicio del script Babel...");
+
+const DIMENSIONS = {
+    centerX: 300,
+    centerY: 300,
+    radius: 250,
+    middleRadius: 180, // Radio para la carta externa (tránsitos)
+    innerRadius: 110,  // Radio para la carta interna (natal)
+    glyphRadius: 235,
+    planetCircleRadiusNatal: 10, // Radio del círculo alrededor de los planetas natales
+    planetCircleRadiusTransit: 10 // Radio del círculo alrededor de los planetas en tránsito
+};
+
+const SIGNS = [
+    {name: 'ARIES', start: 354, length: 36, symbol: '♈', color: '#FFE5E5'},
+    {name: 'TAURUS', start: 30, length: 30, symbol: '♉', color: '#E5FFE5'},
+    {name: 'GEMINI', start: 60, length: 30, symbol: '♊', color: '#FFFFE5'},
+    {name: 'CANCER', start: 90, length: 30, symbol: '♋', color: '#E5FFFF'},
+    {name: 'LEO', start: 120, length: 30, symbol: '♌', color: '#FFE5E5'},
+    {name: 'VIRGO', start: 150, length: 36, symbol: '♍', color: '#E5FFE5'},
+    {name: 'LIBRA', start: 186, length: 24, symbol: '♎', color: '#FFFFE5'},
+    {name: 'SCORPIO', start: 210, length: 30, symbol: '♏', color: '#E5FFFF'},
+    {name: 'OPHIUCHUS', start: 240, length: 12, symbol: '⛎', color: '#FFFFE5'},
+    {name: 'SAGITTARIUS', start: 252, length: 18, symbol: '♐', color: '#FFE5E5'},
+    {name: 'CAPRICORN', start: 270, length: 36, symbol: '♑', color: '#E5FFE5'},
+    {name: 'AQUARIUS', start: 306, length: 18, symbol: '♒', color: '#FFFFE5'},
+    {name: 'PEGASUS', start: 324, length: 6, symbol: '∩', color: '#E5FFFF'},
+    {name: 'PISCES', start: 330, length: 24, symbol: '♓', color: '#E5FFFF'}
+];
+
+const PLANET_SYMBOLS = {
+    'SOL': '☉',
+    'LUNA': '☽',
+    'MERCURIO': '☿',
+    'VENUS': '♀',
+    'MARTE': '♂',
+    'JÚPITER': '♃',
+    'SATURNO': '♄',
+    'URANO': '♅',
+    'NEPTUNO': '♆',
+    'PLUTÓN': '♇',
+    'ASC': 'ASC',
+    'MC': 'MC',
+    'DSC': 'DSC',
+    'IC': 'IC',
+    'PARTE_FORTUNA': 'PF',
+    'PARTE_ESPIRITU': 'PE'
+};
+
+const ASPECTS = {
+    CONJUNCTION: { angle: 0, orb: 2, color: '#000080', name: 'Armónico Relevante' },
+    SEIS: { angle: 6, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    DOCE: { angle: 12, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    DIECIOCHO: { angle: 18, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    VEINTICUATRO: { angle: 24, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    TREINTA: { angle: 30, orb: 2, color: '#FF0000', name: 'Inarmónico Relevante' },
+    TREINTAYSEIS: { angle: 36, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CUARENTAYDOS: { angle: 42, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    CUARENTAYOCHO: { angle: 48, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CICUENTAYCUATRO: { angle: 54, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    SEXTILE: { angle: 60, orb: 2, color: '#000080', name: 'Armónico Relevante' },
+    SESENTAYSEIS: { angle: 66, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    QUINTILE: { angle: 72, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    SETENTAYOCHO: { angle: 78, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    OCHENTAYCUATRO: { angle: 84, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    SQUARE: { angle: 90, orb: 2, color: '#FF0000', name: 'Inarmónico Relevante' },
+    NOVENTAYSEIS: { angle: 96, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CIENTODOS: { angle: 102, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    CIENTOOCHO: { angle: 108, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CIENTOCATORCE: { angle: 114, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    TRINE: { angle: 120, orb: 2, color: '#000080', name: 'Armónico Relevante' },
+    CIENTOVEINTISEIS: { angle: 126, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    CIENTOTREINTAYDOS: { angle: 132, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CIENTOTREINTAYOCHO: { angle: 138, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    CIENTOCUARENTAYCUATRO: { angle: 144, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    QUINCUNX: { angle: 150, orb: 2, color: '#FF0000', name: 'Inarmónico Relevante' },
+    CIENTOCINCUENTAYSEIS: { angle: 156, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CIENTOSESENTAYDOS: { angle: 162, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    CIENTOSESENTAYOCHO: { angle: 168, orb: 2, color: '#ADD8E6', name: 'Armónico' },
+    CIENTOSETENTAYCUATRO: { angle: 174, orb: 2, color: '#ffff00', name: 'Inarmónico' },
+    OPPOSITION: { angle: 180, orb: 2, color: '#000080', name: 'Armónico Relevante' }
+};
+
+const COLORS = {
+    RED: '#FF0000',
+    GREEN: '#00FF00',
+    BLUE: '#0000FF',
+    YELLOW: '#FFFF00'
+};
+
+// Define colores pastel para los planetas
+const PASTEL_COLORS = {
+    RED: '#FF9999',     // Pastel red
+    GREEN: '#99FF99',   // Pastel green
+    BLUE: '#9999FF',    // Pastel blue
+    YELLOW: '#FFFF99',  // Pastel yellow
+    ORANGE: '#FFD699',  // Pastel orange
+    PURPLE: '#D699FF',  // Pastel purple
+    CYAN: '#99FFFF',    // Pastel cyan
+    PINK: '#FF99FF',    // Pastel pink
+    GRAY: '#E0E0E0'     // Light gray for cardinal points
+};
+
+const DIGNIDAD_LABELS = {
+    'domicilio': 'Domicilio',
+    'exaltacion': 'Exaltación',
+    'peregrino': 'Peregrino',
+    'caida': 'Caída',
+    'exilio': 'Exilio'
+};
+
+const FIXED_STARS = [
+            {
+                name: "Aldebaran",
+                longitude_J2000: 69.00,
+                effect: "Honor, inteligencia y riqueza",
+                filePath: "https://www.izarren.top/aldebaran",
+                magnitude: 12
+            },
+            {
+                name: "Antares",
+                longitude_J2000: 249.18,
+                effect: "Impulsividad y éxito arriesgado",
+                filePath: "https://www.izarren.top/antares",
+                magnitude: 12
+            },
+            {
+                name: "Regulus",
+                longitude_J2000: 148.51,
+                effect: "Poder, éxito y honores",
+                filePath: "https://www.izarren.top/regulus",
+                magnitude: 12
+            },
+            {
+                name: "Spica",
+                longitude_J2000: 203.52,
+                effect: "Beneficios a través del arte y ciencia",
+                filePath: "https://www.izarren.top/spica",
+                magnitude: 12
+            },
+            {
+                name: "Sirius",
+                longitude_J2000: 102.30,
+                effect: "Honor, renombre y riqueza",
+                filePath: "https://www.izarren.top/sirio",
+                magnitude: 12
+            },
+            {
+                name: "Algol",
+                longitude_J2000: 56.3,
+                effect: "Desafíos y transformación",
+                filePath: "https://www.izarren.top/algol",
+                magnitude: 12
+            },
+            {
+                name: "Capella",
+                longitude_J2000: 81.40,
+                effect: "Honor y riqueza",
+                filePath: "https://www.izarren.top/capella",
+                magnitude: 12
+            },
+            {
+                name: "Vega",
+                longitude_J2000: 284.03,
+                effect: "Beneficios artísticos y creatividad",
+                filePath: "https://www.izarren.top/vega",
+                magnitude: 12
+            },
+            {
+                name: "Pollux",
+                longitude_J2000: 113.31,
+                effect: "Éxito atlético y marcial",
+                filePath: "https://www.izarren.top/pollux",
+                magnitude: 12
+            },
+            {
+                name: "Fomalhaut",
+                longitude_J2000: 333.0,
+                effect: "Éxito espiritual y místico",
+                filePath: "https://www.izarren.top/fomalhaut",
+                magnitude: 6
+            },
+            {
+                name: "Proción",
+                longitude_J2000: 114.19,
+                effect: "Éxito y honores a través del esfuerzo",
+                filePath: "https://www.izarren.top/procyon",
+                magnitude: 12
+            },
+            {
+                name: "Mira Ceti",
+                longitude_J2000: 31.03,
+                effect: "Misterio y transformación espiritual",
+                filePath: "https://www.izarren.top/mira-de-ceti",
+                magnitude: 6
+            },
+            {
+                name: "Zaurak",
+                longitude_J2000: 53.22,
+                effect: "Sabiduría y paciencia",
+                filePath: "https://www.izarren.top/zaurak",
+                magnitude: 6
+            },
+            {
+                name: "Alkakurops",
+                longitude_J2000: 212.43,
+                effect: "Protección y habilidad estratégica",
+                filePath: "https://www.izarren.top/alkalurops",
+                magnitude: 6
+            },
+            {
+                name: "Markab",
+                longitude_J2000: 353.7,
+                effect: "Viajes y aventuras exitosas",
+                filePath: "https://www.izarren.top/markab",
+                magnitude: 6
+            },
+            {
+                name: "Princeps",
+                longitude_J2000: 212.41,
+                effect: "Liderazgo y nobleza",
+                filePath: "https://www.izarren.top/princeps",
+                magnitude: 6
+            }
+    ];
+    
+function calculatePrecession(date) {
+    const currentDate = new Date(date);
+    const year = currentDate.getFullYear() + (currentDate.getMonth() + 1) / 12;
+    const yearsSinceJ2000 = year - 2000.0;
+    const precessionRate = 50.2908 / 3600.0;
+    return precessionRate * yearsSinceJ2000;
+}
+
+function getCurrentStarPosition(star, date) {
+    const precession = calculatePrecession(date);
+    return (star.longitude_J2000 + precession) % 360;
+}
+
+function determineHouse(longitude, ascendant) {
+    if (ascendant === undefined || ascendant === null) return null;
+    let relativeLongitude = longitude - ascendant;
+    if (relativeLongitude < 0) relativeLongitude += 360;
+    const house = Math.floor(relativeLongitude / 30) + 1;
+    return house > 12 ? house - 12 : house;
+}
+
+function getPlanetColor(planet, longitude) {
+    // Función actualizada para usar colores pastel
+    if (planet === 'ASC' || planet === 'MC' || planet === 'DSC' || planet === 'IC' ||
+        planet === 'PARTE_FORTUNA' || planet === 'PARTE_ESPIRITU') {
+        return PASTEL_COLORS.GRAY;
+    }
+    
+    if (planet === 'JÚPITER') {
+        if ((longitude >= 306.00 && longitude <= 360.00) || (longitude >= 0.00 && longitude <= 150.00)) 
+            return PASTEL_COLORS.BLUE;
+        if (longitude > 150.00 && longitude < 306.00) 
+            return PASTEL_COLORS.RED;
+        return PASTEL_COLORS.BLUE;
+    }
+
+    if (planet === 'SATURNO') {
+        if ((longitude >= 330.00 && longitude <= 360.00) || (longitude >= 0.00 && longitude <= 150.00))
+            return PASTEL_COLORS.YELLOW;
+        if (longitude > 240.00 && longitude <= 252.00) 
+            return PASTEL_COLORS.YELLOW;
+        if (longitude > 252.00 && longitude <= 330.00) 
+            return PASTEL_COLORS.RED;
+        if (longitude > 150.00 && longitude <= 240.00) 
+            return PASTEL_COLORS.RED;
+        return PASTEL_COLORS.YELLOW;
+    }
+
+    if (longitude > 150.00 && longitude <= 330.00) {
+        switch(planet) {
+            case 'SOL': case 'MERCURIO': case 'URANO': return PASTEL_COLORS.GREEN;
+            case 'VENUS': case 'LUNA': return PASTEL_COLORS.YELLOW;
+            case 'MARTE': case 'PLUTÓN': return PASTEL_COLORS.BLUE;
+            case 'NEPTUNO': return PASTEL_COLORS.RED;
+            default: return PASTEL_COLORS.GRAY;
+        }
+    } else {
+        switch(planet) {
+            case 'SOL': case 'MARTE': case 'PLUTÓN': return PASTEL_COLORS.RED;
+            case 'VENUS': return PASTEL_COLORS.GREEN;
+            case 'MERCURIO': case 'URANO': return PASTEL_COLORS.YELLOW;
+            case 'LUNA': case 'NEPTUNO': return PASTEL_COLORS.BLUE;
+            default: return PASTEL_COLORS.GRAY;
+        }
+    }
+}
+
+function calculateAspects(planets) {
+    const aspects = [];
+    const validPlanets = planets;
+
+    for (let i = 0; i < validPlanets.length; i++) {
+        for (let j = i + 1; j < validPlanets.length; j++) {
+            const planet1 = validPlanets[i];
+            const planet2 = validPlanets[j];
+            let diff = Math.abs(planet1.longitude - planet2.longitude);
+            if (diff > 180) diff = 360 - diff;
+            
+            for (const [aspectType, aspect] of Object.entries(ASPECTS)) {
+                if (Math.abs(diff - aspect.angle) <= aspect.orb) {
+                    aspects.push({
+                        planet1: planet1.name,
+                        planet2: planet2.name,
+                        type: aspectType,
+                        angle: diff,
+                        color: aspect.color
+                    });
+                    break;
+                }
+            }
+        }
+    }
+    return aspects;
+}
+
+// Función para calcular aspectos entre dos conjuntos de planetas
+function calculateAspectsBetweenSets(planets1, planets2) {
+    const aspects = [];
+    const traditional_planets = ["SOL", "LUNA", "MERCURIO", "VENUS", "MARTE", "JÚPITER", "SATURNO"];
+    
+    // Filtrar planetas tradicionales
+    const validPlanets1 = planets1.filter(p => traditional_planets.includes(p.name));
+    const validPlanets2 = planets2.filter(p => traditional_planets.includes(p.name));
+    
+    for (let i = 0; i < validPlanets1.length; i++) {
+        for (let j = 0; j < validPlanets2.length; j++) {
+            const planet1 = validPlanets1[i];
+            const planet2 = validPlanets2[j];
+            
+            // Calcular la diferencia angular
+            let diff = Math.abs(planet1.longitude - planet2.longitude);
+            if (diff > 180) diff = 360 - diff;
+            
+            // Buscar aspectos
+            for (const [aspectType, aspect] of Object.entries(ASPECTS)) {
+                if (Math.abs(diff - aspect.angle) <= aspect.orb) {
+                    aspects.push({
+                        planet1: planet1.name,
+                        planet2: planet2.name,
+                        type: aspectType,
+                        angle: diff,
+                        color: aspect.color,
+                        isInterChart: true
+                    });
+                    break;
+                }
+            }
+        }
+    }
+    
+    return aspects;
+}
+
+function getActiveStars(planets, date) {
+    return FIXED_STARS.filter(star => {
+        const currentLongitude = getCurrentStarPosition(star, date);
+        return planets.some(planet => {
+            const diff = Math.abs(currentLongitude - planet.longitude);
+            const adjustedDiff = Math.min(diff, 360 - diff);
+            const orb = star.magnitude >= 12 ? 2.40 : 1.20;
+            return adjustedDiff <= orb;
+        });
+    });
+}
+
+function findConjunctPlanets(star, planets, date) {
+    const currentLongitude = getCurrentStarPosition(star, date);
+    const orb = star.magnitude >= 12 ? 2.40 : 1.20;
+    return planets.filter(planet => {
+        const diff = Math.abs(currentLongitude - planet.longitude);
+        const adjustedDiff = Math.min(diff, 360 - diff);
+        return adjustedDiff <= orb;
+    }).map(planet => ({
+        name: planet.name,
+        diff: Math.min(
+            Math.abs(currentLongitude - planet.longitude),
+            360 - Math.abs(currentLongitude - planet.longitude)
+        ).toFixed(2)
+    }));
+}
+
+function createArcPath(startAngle, endAngle) {
+    const start = ((startAngle - 90) * Math.PI) / 180;
+    const end = ((endAngle - 90) * Math.PI) / 180;
+    
+    const x1 = DIMENSIONS.centerX + DIMENSIONS.radius * Math.cos(start);
+    const y1 = DIMENSIONS.centerY + DIMENSIONS.radius * Math.sin(start);
+    const x2 = DIMENSIONS.centerX + DIMENSIONS.radius * Math.cos(end);
+    const y2 = DIMENSIONS.centerY + DIMENSIONS.radius * Math.sin(end);
+    
+    const x1Inner = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(start);
+    const y1Inner = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(start);
+    const x2Inner = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(end);
+    const y2Inner = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(end);
+    
+    const largeArcFlag = end - start <= Math.PI ? "0" : "1";
+    
+    return `M ${x1} ${y1} A ${DIMENSIONS.radius} ${DIMENSIONS.radius} 0 ${largeArcFlag} 1 ${x2} ${y2} L ${x2Inner} ${y2Inner} A ${DIMENSIONS.innerRadius} ${DIMENSIONS.innerRadius} 0 ${largeArcFlag} 0 ${x1Inner} ${y1Inner} Z`;
+}
+
+function App() {
+    console.log("Componente App inicializado");
+    // Estados
+    const [cities, setCities] = React.useState([]);
+    const [cityInput, setCityInput] = React.useState('');
+    const [date, setDate] = React.useState(new Date().toISOString().split('T')[0]);
+    const [time, setTime] = React.useState(new Date().toTimeString().slice(0,5));
+    const [planets, setPlanets] = React.useState([]);
+    const [aspects, setAspects] = React.useState([]);
+    const [error, setError] = React.useState('');
+    const [selectedAspect, setSelectedAspect] = React.useState(null);
+    const [selectedPlanet, setSelectedPlanet] = React.useState(null);
+    const [activeStars, setActiveStars] = React.useState([]);
+    const [transitActiveStars, setTransitActiveStars] = React.useState([]);
+    const [interpretations, setInterpretations] = React.useState({
+        planets_in_signs: [],
+        planets_in_houses: [],
+        aspects: [],
+        house_rulers: []
+    });
+    const [transitInterpretations, setTransitInterpretations] = React.useState({
+        planets_in_signs: [],
+        planets_in_houses: [],
+        aspects: [],
+        house_rulers: []
+    });
+    
+    // Estados para tránsitos y zodiaco sideral
+    const [transitCities, setTransitCities] = React.useState([]);
+    const [transitCityInput, setTransitCityInput] = React.useState('');
+    const [transitDate, setTransitDate] = React.useState(new Date().toISOString().split('T')[0]);
+    const [transitTime, setTransitTime] = React.useState(new Date().toTimeString().slice(0,5));
+    const [transitPlanets, setTransitPlanets] = React.useState([]);
+    const [interChartAspects, setInterChartAspects] = React.useState([]);
+    const [showTransits, setShowTransits] = React.useState(false);
+    const [useSiderealZodiac, setUseSiderealZodiac] = React.useState(false);
+    const [loading, setLoading] = React.useState(false);
+    const [isDry, setIsDry] = React.useState(null);
+    
+    // Estado para controlar la visibilidad de pestañas en interpretaciones
+    const [activeTab, setActiveTab] = React.useState('natal');
+
+    React.useEffect(() => {
+        if (planets.length > 0) {
+            const stars = getActiveStars(planets, date);
+            setActiveStars(stars);
+            console.log("Estrellas fijas en carta natal:", stars.length);
+        }
+    }, [planets, date]);
+
+    React.useEffect(() => {
+        if (transitPlanets.length > 0 && showTransits) {
+            const stars = getActiveStars(transitPlanets, transitDate);
+            setTransitActiveStars(stars);
+            console.log("Estrellas fijas en tránsitos:", stars.length);
+        } else {
+            setTransitActiveStars([]);
+        }
+    }, [transitPlanets, transitDate, showTransits]);
+
+    // Manejadores de eventos
+    const handleCalculate = () => {
+        console.log("Calculando para ciudad:", cityInput);
+        
+        if (!cityInput || !date || !time) {
+            setError("Debes ingresar ciudad, fecha y hora.");
+            return;
+        }
+
+        setLoading(true);
+        setError("");
+        
+        console.log("Datos para cálculo:", { 
+            city: cityInput, 
+            date, 
+            time, 
+            useSidereal: useSiderealZodiac 
+        });
+        
+        const apiUrl = `/calculate`;
+
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                city: cityInput,
+                date: date,
+                time: time,
+                useSidereal: useSiderealZodiac
+            })
+        })
+        .then(response => {
+            console.log("Respuesta status:", response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log("Datos recibidos:", data);
+            if (data.error) throw new Error(data.error);
+
+            document.getElementById("location").innerHTML = `<b>Ciudad:</b> ${data.city}`;
+            document.getElementById("coordinates").innerHTML = `<b>Coordenadas:</b> Lat ${data.coordinates.latitude}, Lon ${data.coordinates.longitude}`;
+            
+            // Mostrar información de zona horaria
+            if (data.timezone) {
+                const dstInfo = data.timezone.is_dst ? "Horario de verano activo" : "Horario estándar";
+                const abbr = data.timezone.is_dst ? data.timezone.abbreviation_DST : data.timezone.abbreviation_STD;
+                const hemisferio = data.timezone.hemisphere === "norte" ? "Hemisferio Norte" : "Hemisferio Sur";
+                document.getElementById("timezone").innerHTML = `<b>Zona horaria:</b> ${data.timezone.name} (${abbr}) - ${dstInfo} - ${hemisferio}`;
+                document.getElementById("time-conversion").innerHTML = `<b>Hora local:</b> ${data.local_time} → <b>UTC:</b> ${data.utc_time}`;
+            } else if (data.error_timezone) {
+                document.getElementById("timezone").innerHTML = `<b>Advertencia:</b> ${data.error_timezone}`;
+            }
+
+            // Añadir sistema zodiacal
+            document.getElementById("zodiac-system").innerHTML = `<b>Sistema zodiacal:</b> ${useSiderealZodiac ? 'Sideral (Fagan-Allen)' : 'Tropical'}`;
+
+            setPlanets(data.positions);
+            setAspects(calculateAspects(data.positions));
+            setInterpretations(data.interpretations);
+            setIsDry(data.isDry);
+            
+            // Si los tránsitos están habilitados, calcularlos también
+            if (showTransits && transitCityInput && transitDate && transitTime) {
+                handleCalculateTransits();
+            } else {
+                setLoading(false);
+            }
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            setError(`Error en la consulta: ${err.message}`);
+            setLoading(false);
+        });
+    };
+    
+    const handleCalculateTransits = () => {
+        if (!transitCityInput || !transitDate || !transitTime) {
+            setError("Debes ingresar ciudad, fecha y hora para los tránsitos.");
+            return;
+        }
+        
+        console.log("Datos para tránsitos:", { 
+            city: transitCityInput, 
+            date: transitDate, 
+            time: transitTime,
+            useSidereal: useSiderealZodiac 
+        });
+        
+        fetch('/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                city: transitCityInput,
+                date: transitDate,
+                time: transitTime,
+                useSidereal: useSiderealZodiac
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Datos de tránsitos recibidos:", data);
+            if (data.error) throw new Error(data.error);
+            
+            setTransitPlanets(data.positions);
+            setTransitInterpretations(data.interpretations);
+            
+            // Calcular aspectos entre cartas (natal y tránsitos)
+            const interAspects = calculateAspectsBetweenSets(planets, data.positions);
+            setInterChartAspects(interAspects);
+            
+            setLoading(false);
+        })
+        .catch(err => {
+            console.error('Error en tránsitos:', err);
+            setError(`Error calculando tránsitos: ${err.message}`);
+            setLoading(false);
+        });
+    };
+
+    const handlePlanetClick = (planetName) => {
+        setSelectedPlanet(selectedPlanet === planetName ? null : planetName);
+        setSelectedAspect(null);
+    };
+
+    const handleAspectClick = (aspect) => {
+        setSelectedAspect(selectedAspect === aspect ? null : aspect);
+        setSelectedPlanet(null);
+    };
+
+    const handleStarClick = (star) => {
+        if (star.filePath) {
+            window.open(star.filePath, "_blank");
+        }
+    };
+
+    const handleCitySearch = (e, isTransit = false) => {
+        const searchText = e.target.value;
+        if (isTransit) {
+            setTransitCityInput(searchText);
+        } else {
+            setCityInput(searchText);
+        }
+        
+        if (searchText.length >= 3) {
+            console.log(`Buscando ciudades ${isTransit ? '(tránsito)' : ''}:`, searchText);
+            fetch(`/cities?ciudad=${encodeURIComponent(searchText)}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Respuesta de ciudades:", data);
+                    if (data.ciudades && Array.isArray(data.ciudades)) {
+                        if (isTransit) {
+                            setTransitCities(data.ciudades.map(ciudad => ({ value: ciudad, label: ciudad })));
+                        } else {
+                            setCities(data.ciudades.map(ciudad => ({ value: ciudad, label: ciudad })));
+                        }
+                    } else {
+                        console.log("Formato de respuesta inesperado:", data);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error buscando ciudades:", err);
+                    setError("Error al buscar ciudades, intenta de nuevo");
+                });
+        }
+    };
+    
+    const toggleTransits = () => {
+        setShowTransits(!showTransits);
+        // Resetear a pestaña natal cuando se activan o desactivan tránsitos
+        setActiveTab('natal');
+    };
+    
+    const toggleSiderealZodiac = () => {
+        setUseSiderealZodiac(!useSiderealZodiac);
+    };
+
+    // Obtener planetas tradicionales para mostrar
+    const traditionalPlanets = ["SOL", "LUNA", "MERCURIO", "VENUS", "MARTE", "JÚPITER", "SATURNO"];
+    
+    // Filtrar aspectos relevantes (conjunción, oposición, trígono, cuadratura, sextil, quincuncio)
+    const relevantAspects = aspects.filter(aspect => 
+        ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE", "QUINCUNX"].includes(aspect.type)
+    );
+    
+    // Filtrar aspectos relevantes entre tránsitos y carta natal
+    const relevantInterChartAspects = interChartAspects.filter(aspect => 
+        ["CONJUNCTION", "OPPOSITION", "TRINE", "SQUARE", "SEXTILE", "QUINCUNX"].includes(aspect.type)
+    );
+
+    // Checar si un planeta de tránsito está seleccionado
+    const isTransitPlanetSelected = selectedPlanet && selectedPlanet.includes('_transit');
+    const transitPlanetName = isTransitPlanetSelected ? selectedPlanet.replace('_transit', '') : null;
+    
+    // Determinar qué planetas están involucrados en el aspecto seleccionado
+    const planetsInSelectedAspect = selectedAspect 
+        ? [selectedAspect.planet1, selectedAspect.planet2] 
+        : [];
+
+    return (
+        <div>
+            {loading && (
+                <div className="loading">
+                    <div className="loading-spinner"></div>
+                </div>
+            )}
+            
+            {/* Formulario moderno */}
+            <div className="modern-form">
+                <div className="form-row">
+                    <div className="form-group">
+                        <label>Ciudad de Nacimiento</label>
+                        <input 
+                            type="text" 
+                            className="form-control"
+                            placeholder="Ej: Madrid, España" 
+                            value={cityInput}
+                            onChange={e => handleCitySearch(e, false)}
+                            list="ciudades-list"
+                        />
+                        <datalist id="ciudades-list">
+                            {cities.map((city, index) => (
+                                <option key={index} value={city.value}>{city.label}</option>
+                            ))}
+                        </datalist>
+                    </div>
+                    
+                    <div className="form-group">
+                        <label>Fecha de Nacimiento</label>
+                        <input 
+                            type="date" 
+                            className="form-control"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                        />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label>Hora de Nacimiento</label>
+                        <input 
+                            type="time" 
+                            className="form-control"
+                            step="60"
+                            value={time}
+                            onChange={(e) => setTime(e.target.value)}
+                        />
+                    </div>
+                </div>
+                
+                <div className="toggle-options">
+                    <div className="toggle-switch">
+                        <input 
+                            type="checkbox" 
+                            id="showTransits" 
+                            checked={showTransits}
+                            onChange={toggleTransits}
+                        />
+                        <label htmlFor="showTransits"></label>
+                        <span className="toggle-label">Mostrar Tránsitos</span>
+                    </div>
+                    
+                    <div className="toggle-switch">
+                        <input 
+                            type="checkbox" 
+                            id="useSiderealZodiac" 
+                            checked={useSiderealZodiac}
+                            onChange={toggleSiderealZodiac}
+                        />
+                        <label htmlFor="useSiderealZodiac"></label>
+                        <span className="toggle-label">Usar Zodiaco Sideral</span>
+                    </div>
+                </div>
+                
+                {showTransits && (
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label>Ciudad de Tránsito</label>
+                            <input 
+                                type="text" 
+                                className="form-control"
+                                placeholder="Ej: Madrid, España" 
+                                value={transitCityInput}
+                                onChange={e => handleCitySearch(e, true)}
+                                list="transit-ciudades-list"
+                            />
+                            <datalist id="transit-ciudades-list">
+                                {transitCities.map((city, index) => (
+                                    <option key={index} value={city.value}>{city.label}</option>
+                                ))}
+                            </datalist>
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Fecha de Tránsito</label>
+                            <input 
+                                type="date" 
+                                className="form-control"
+                                value={transitDate}
+                                onChange={(e) => setTransitDate(e.target.value)}
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Hora de Tránsito</label>
+                            <input 
+                                type="time" 
+                                className="form-control"
+                                step="60"
+                                value={transitTime}
+                                onChange={(e) => setTransitTime(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                )}
+                
+                <button className="btn-primary" onClick={handleCalculate}>
+                    Calcular Carta Astral
+                </button>
+            </div>
+
+            <div className="info-panel" id="results">
+                <div id="location"></div>
+                <div id="coordinates"></div>
+                <div id="timezone"></div>
+                <div id="time-conversion"></div>
+                <div id="zodiac-system"></div>
+                {isDry !== null && (
+                    <div id="birth-type">
+                        <b>Tipo de nacimiento:</b> {isDry ? 'Seco (diurno)' : 'Húmedo (nocturno)'}
+                    </div>
+                )}
+            </div>
+
+            {error && <div className="error-message">{error}</div>}
+
+            {planets.length > 0 && (
+                <div className="main-container">
+                    <div className="left-section">
+                        {/* Rueda Astrológica */}
+                        <div className="wheel-container">
+                            <svg viewBox="0 0 600 600" className="wheel-svg">
+                                {/* Círculo exterior */}
+                                <circle
+                                    cx={DIMENSIONS.centerX}
+                                    cy={DIMENSIONS.centerY}
+                                    r={DIMENSIONS.radius}
+                                    fill="none"
+                                    stroke="#333"
+                                    strokeWidth="2"
+                                />
+
+                                {/* Signos zodiacales */}
+                                {SIGNS.map(sign => {
+                                    const midAngle = ((sign.start + sign.length/2 - 90) * Math.PI) / 180;
+                                    const glyphX = DIMENSIONS.centerX + DIMENSIONS.glyphRadius * Math.cos(midAngle);
+                                    const glyphY = DIMENSIONS.centerY + DIMENSIONS.glyphRadius * Math.sin(midAngle);
+                                    
+                                    return (
+                                        <g key={sign.name}>
+                                            <path
+                                                d={createArcPath(sign.start, sign.start + sign.length)}
+                                                fill={sign.color}
+                                                stroke="#333"
+                                                strokeWidth="1"
+                                            />
+                                            <text
+                                                x={glyphX}
+                                                y={glyphY}
+                                                textAnchor="middle"
+                                                alignmentBaseline="middle"
+                                                fontSize="20"
+                                            >
+                                                {sign.symbol}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
+
+                                {/* Círculo interior y medio (para tránsitos) */}
+                                {showTransits && transitPlanets.length > 0 && (
+                                    <circle
+                                        cx={DIMENSIONS.centerX}
+                                        cy={DIMENSIONS.centerY}
+                                        r={DIMENSIONS.middleRadius}
+                                        fill="none"
+                                        stroke="#333"
+                                        strokeWidth="1"
+                                        strokeDasharray="3,3"
+                                    />
+                                )}
+                                
+                                <circle
+                                    cx={DIMENSIONS.centerX}
+                                    cy={DIMENSIONS.centerY}
+                                    r={DIMENSIONS.innerRadius}
+                                    fill="white"
+                                    stroke="#333"
+                                    strokeWidth="1"
+                                />
+
+                                {/* Aspectos entre planetas en carta natal - solo mostrar si no hay tránsitos activos */}
+                                {!showTransits && relevantAspects.map((aspect, index) => {
+                                    const planet1 = planets.find(p => p.name === aspect.planet1);
+                                    const planet2 = planets.find(p => p.name === aspect.planet2);
+                                    
+                                    if (!planet1 || !planet2) return null;
+                                    
+                                    const angle1 = (planet1.longitude - 90) * Math.PI / 180;
+                                    const angle2 = (planet2.longitude - 90) * Math.PI / 180;
+                                    
+                                    const x1 = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(angle1);
+                                    const y1 = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(angle1);
+                                    const x2 = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(angle2);
+                                    const y2 = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(angle2);
+                                    
+                                    const aspectInfo = `${PLANET_SYMBOLS[aspect.planet1]} ${convertirGradosZodiacales(planet1.longitude, planet1.sign)} ${planet1.sign} ${ASPECTS[aspect.type].name} ${PLANET_SYMBOLS[aspect.planet2]} ${convertirGradosZodiacales(planet2.longitude, planet2.sign)} ${planet2.sign} (${aspect.angle.toFixed(2)}°)`;
+                                    
+                                    const isHighlighted = selectedAspect === aspect || 
+                                        (selectedPlanet && (aspect.planet1 === selectedPlanet || aspect.planet2 === selectedPlanet));
+                                    
+                                    return (
+                                        <line
+                                            key={`aspect-${index}`}
+                                            x1={x1}
+                                            y1={y1}
+                                            x2={x2}
+                                            y2={y2}
+                                            stroke={aspect.color}
+                                            strokeWidth={isHighlighted ? "3" : "1"}
+                                            strokeDasharray={aspect.type === 'OPPOSITION' ? "5,5" : "none"}
+                                            className="aspect-line"
+                                            onClick={() => handleAspectClick(aspect)}
+                                        >
+                                            <title>{aspectInfo}</title>
+                                        </line>
+                                    );
+                                })}
+                                
+                                {/* Aspectos entre tránsitos y carta natal - solo mostrar si hay tránsitos activos */}
+                                {showTransits && transitPlanets.length > 0 && relevantInterChartAspects.map((aspect, index) => {
+                                    const planet1 = planets.find(p => p.name === aspect.planet1);
+                                    const planet2 = transitPlanets.find(p => p.name === aspect.planet2);
+                                    
+                                    if (!planet1 || !planet2) return null;
+                                    
+                                    const angle1 = (planet1.longitude - 90) * Math.PI / 180;
+                                    const angle2 = (planet2.longitude - 90) * Math.PI / 180;
+                                    
+                                    const x1 = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(angle1);
+                                    const y1 = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(angle1);
+                                    const x2 = DIMENSIONS.centerX + DIMENSIONS.middleRadius * Math.cos(angle2);
+                                    const y2 = DIMENSIONS.centerY + DIMENSIONS.middleRadius * Math.sin(angle2);
+                                    
+                                    const aspectInfo = `${PLANET_SYMBOLS[aspect.planet1]} (natal) ${ASPECTS[aspect.type].name} ${PLANET_SYMBOLS[aspect.planet2]} (tránsito) (${aspect.angle.toFixed(2)}°)`;
+                                    
+                                    // Destacar aspectos cuando el planeta está seleccionado (en tránsito o natal)
+                                    const isHighlighted = 
+                                        selectedAspect === aspect || 
+                                        (selectedPlanet === aspect.planet1) || 
+                                        (transitPlanetName === aspect.planet2);
+                                        
+                                    return (
+                                        <line
+                                            key={`transit-aspect-${index}`}
+                                            x1={x1}
+                                            y1={y1}
+                                            x2={x2}
+                                            y2={y2}
+                                            stroke={aspect.color}
+                                            strokeWidth={isHighlighted ? "3" : "1"}
+                                            strokeDasharray="3,3"
+                                            className="aspect-line transit-aspect"
+                                            onClick={() => handleAspectClick(aspect)}
+                                        >
+                                            <title>{aspectInfo}</title>
+                                        </line>
+                                    );
+                                })}
+
+                                {/* Estrellas fijas para carta natal y tránsitos */}
+                                {(showTransits ? transitActiveStars : activeStars).map((star, index) => {
+                                    const currentLongitude = getCurrentStarPosition(star, showTransits ? transitDate : date);
+                                    const angle = (currentLongitude - 90) * Math.PI / 180;
+                                    
+                                    // Posicionar las estrellas según si es tránsito o carta natal
+                                    const starRadius = showTransits ? 
+                                        (DIMENSIONS.radius + DIMENSIONS.middleRadius) / 2 :
+                                        (DIMENSIONS.radius + DIMENSIONS.innerRadius) / 1.8;
+                                        
+                                    const x = DIMENSIONS.centerX + starRadius * Math.cos(angle);
+                                    const y = DIMENSIONS.centerY + starRadius * Math.sin(angle);
+                                    
+                                    const conjunctPlanets = findConjunctPlanets(
+                                        star, 
+                                        showTransits ? transitPlanets : planets, 
+                                        showTransits ? transitDate : date
+                                    );
+                                    
+                                    return (
+                                        <g 
+                                            key={`${showTransits ? 'transit-' : ''}star-${index}`}
+                                            onClick={() => handleStarClick(star)}
+                                            style={{cursor: 'pointer'}}
+                                        >
+                                            <text
+                                                x={x}
+                                                y={y}
+                                                textAnchor="middle"
+                                                alignmentBaseline="middle"
+                                                fill="#FFD700"
+                                                stroke="#000"
+                                                strokeWidth="0.5"
+                                                style={{
+                                                    fontSize: star.magnitude === 12 ? "16px" : "12px",
+                                                    fontWeight: 'bold'
+                                                }}
+                                            >
+                                                ★
+                                            </text>
+                                            <title>
+                                                {star.name} {showTransits ? "(tránsito)" : ""} - {conjunctPlanets.map(p => 
+                                                    `${PLANET_SYMBOLS[p.name]} (${p.diff}°)`
+                                                ).join(', ')}
+                                            </title>
+                                        </g>
+                                    )
+                                })}
+
+                                {/* Planetas de la carta natal */}
+                                {planets.map((planet) => {
+                                    const angle = (planet.longitude - 90) * Math.PI / 180;
+                                    const x = DIMENSIONS.centerX + DIMENSIONS.innerRadius * Math.cos(angle);
+                                    const y = DIMENSIONS.centerY + DIMENSIONS.innerRadius * Math.sin(angle);
+                                    
+                                    // Determinar si el planeta está involucrado en el aspecto seleccionado
+                                    const isInSelectedAspect = planetsInSelectedAspect.includes(planet.name);
+                                    
+                                    // No usamos adjustment porque queremos que los glifos estén dentro de sus círculos
+                                    const isSelected = selectedPlanet === planet.name || isInSelectedAspect;
+                                    const tooltipText = `${planet.name} ${convertirGradosZodiacales(planet.longitude, planet.sign)} ${planet.sign}`;
+                                    
+                                    // Determinar el color del planeta con tonos pastel
+                                    const planetColor = getPlanetColor(planet.name, planet.longitude);
+                                    
+                                    // Radio del círculo del planeta, más grande si está seleccionado
+                                    const circleRadius = isSelected ? DIMENSIONS.planetCircleRadiusNatal + 2 : DIMENSIONS.planetCircleRadiusNatal;
+                                    
+                                    // Calcular z-index relativo para planetas seleccionados (mayor número = encima)
+                                    const zIndex = isSelected ? 10 : 1;
+                                    
+                                    return (
+                                        <g 
+                                            key={planet.name}
+                                            onClick={() => handlePlanetClick(planet.name)}
+                                            style={{cursor: 'pointer'}}
+                                        >
+                                            {/* Círculo más grande para abarcar el glifo */}
+                                            <circle
+                                                cx={x}
+                                                cy={y}
+                                                r={circleRadius}
+                                                fill={planetColor}
+                                                stroke="#000"
+                                                strokeWidth={isSelected ? "2" : "1"}
+                                                className="natal-planet"
+                                                style={{zIndex: zIndex}}
+                                            />
+                                            
+                                            {/* Indicador para planetas retrógrados */}
+                                            {planet.motion_status === 'retrograde' && (
+                                                <circle
+                                                    cx={x}
+                                                    cy={y - 8}
+                                                    r="3"
+                                                    fill="#dc3545"
+                                                    stroke="none"
+                                                    style={{zIndex: zIndex + 1}}
+                                                />
+                                            )}
+                                            
+                                            {/* Indicador para planetas estacionarios */}
+                                            {planet.motion_status === 'stationary_retrograde' && (
+                                                <circle
+                                                    cx={x}
+                                                    cy={y - 8}
+                                                    r="3"
+                                                    fill="#fd7e14"
+                                                    stroke="none"
+                                                    style={{zIndex: zIndex + 1}}
+                                                />
+                                            )}
+                                            
+                                            {planet.motion_status === 'stationary_direct' && (
+                                                <circle
+                                                    cx={x}
+                                                    cy={y - 8}
+                                                    r="3"
+                                                    fill="#20c997"
+                                                    stroke="none"
+                                                    style={{zIndex: zIndex + 1}}
+                                                />
+                                            )}
+                                            
+                                            {/* Posicionar glifo dentro del círculo */}
+                                            <text
+                                                x={x}
+                                                y={y}
+                                                textAnchor="middle"
+                                                alignmentBaseline="middle"
+                                                className="planet-label"
+                                                style={{
+                                                    fontSize: isSelected ? "18px" : "15px",
+                                                    fontWeight: planet.name === 'VENUS' || planet.name === 'MARTE' ? 'bolder' : 'bold',
+                                                    zIndex: zIndex + 2
+                                                }}
+                                            >
+                                                {PLANET_SYMBOLS[planet.name]}
+                                            </text>
+                                            <title>{tooltipText}{planet.dignidad ? ` (${DIGNIDAD_LABELS[planet.dignidad]})` : ''}{planet.motion_status === 'retrograde' ? ' (Retrógrado)' : planet.motion_status === 'stationary_retrograde' ? ' (Estacionario Retrógrado)' : planet.motion_status === 'stationary_direct' ? ' (Estacionario Directo)' : ''}</title>
+                                        </g>
+                                    );
+                                })}
+                                
+                                {/* Planetas de tránsitos */}
+                                {showTransits && transitPlanets.length > 0 && transitPlanets.map((planet) => {
+                                    const angle = (planet.longitude - 90) * Math.PI / 180;
+                                    const x = DIMENSIONS.centerX + DIMENSIONS.middleRadius * Math.cos(angle);
+                                    const y = DIMENSIONS.centerY + DIMENSIONS.middleRadius * Math.sin(angle);
+                                    
+                                    // Determinar si el planeta está involucrado en el aspecto seleccionado
+                                    const isInSelectedAspect = selectedAspect && 
+                                                                selectedAspect.isInterChart && 
+                                                                selectedAspect.planet2 === planet.name;
+                                    
+                                    // No usamos adjustment porque queremos que los glifos estén dentro de sus círculos
+                                    const isSelected = selectedPlanet === planet.name + '_transit' || isInSelectedAspect;
+                                    const tooltipText = `${planet.name} (Tránsito) ${convertirGradosZodiacales(planet.longitude, planet.sign)} ${planet.sign}`;
+                                    
+                                    // Determinar el color del planeta con tonos pastel
+                                    const planetColor = getPlanetColor(planet.name, planet.longitude);
+                                    
+                                    // Radio del círculo del planeta, más grande si está seleccionado
+                                    const circleRadius = isSelected ? DIMENSIONS.planetCircleRadiusTransit + 2 : DIMENSIONS.planetCircleRadiusTransit;
+                                    
+                                    // Calcular z-index relativo para planetas seleccionados (mayor número = encima)
+                                    const zIndex = isSelected ? 10 : 1;
+                                    
+                                    return (
+                                        <g 
+                                            key={`transit_${planet.name}`}
+                                            onClick={() => handlePlanetClick(planet.name + '_transit')}
+                                            style={{cursor: 'pointer'}}
+                                        >
+                                            {/* Círculo más grande para abarcar el glifo */}
+                                            <circle
+                                                cx={x}
+                                                cy={y}
+                                                r={circleRadius}
+                                                fill={planetColor}
+                                                stroke="#000"
+                                                strokeWidth={isSelected ? "2" : "1"}
+                                                strokeDasharray="2,2"
+                                                className="transit-planet"
+                                                style={{zIndex: zIndex}}
+                                            />
+                                            
+                                            {/* Indicador para planetas retrógrados */}
+                                            {planet.motion_status === 'retrograde' && (
+                                                <circle
+                                                    cx={x}
+                                                    cy={y - 8}
+                                                    r="3"
+                                                    fill="#dc3545"
+                                                    stroke="none"
+                                                    style={{zIndex: zIndex + 1}}
+                                                />
+                                            )}
+                                            
+                                            {/* Indicador para planetas estacionarios */}
+                                            {planet.motion_status === 'stationary_retrograde' && (
+                                                <circle
+                                                    cx={x}
+                                                    cy={y - 8}
+                                                    r="3"
+                                                    fill="#fd7e14"
+                                                    stroke="none"
+                                                    style={{zIndex: zIndex + 1}}
+                                                />
+                                            )}
+                                            
+                                            {planet.motion_status === 'stationary_direct' && (
+                                                <circle
+                                                    cx={x}
+                                                    cy={y - 8}
+                                                    r="3"
+                                                    fill="#20c997"
+                                                    stroke="none"
+                                                    style={{zIndex: zIndex + 1}}
+                                                />
+                                            )}
+                                            
+                                            {/* Posicionar glifo dentro del círculo */}
+                                            <text
+                                                x={x}
+                                                y={y}
+                                                textAnchor="middle"
+                                                alignmentBaseline="middle"
+                                                className="planet-label"
+                                                style={{
+                                                    fontSize: isSelected ? "18px" : "15px",
+                                                    fontWeight: planet.name === 'VENUS' || planet.name === 'MARTE' ? 'bolder' : 'bold',
+                                                    zIndex: zIndex + 2
+                                                }}
+                                            >
+                                                {PLANET_SYMBOLS[planet.name]}
+                                            </text>
+                                            <title>{tooltipText}{planet.dignidad ? ` (${DIGNIDAD_LABELS[planet.dignidad]})` : ''}{planet.motion_status === 'retrograde' ? ' (Retrógrado)' : planet.motion_status === 'stationary_retrograde' ? ' (Estacionario Retrógrado)' : planet.motion_status === 'stationary_direct' ? ' (Estacionario Directo)' : ''}</title>
+                                        </g>
+                                    );
+                                })}
+                            </svg>
+                        </div>
+                        
+                        {/* Información de planetas y estrellas debajo de la rueda */}
+                        <div className="planets-panel">
+                            {/* Columna 1: Planetas Natales */}
+                            <div className="planets-column">
+                                <h3>Planetas Natales</h3>
+                                {planets.map(planet => {
+                                    // Determinar si el planeta está involucrado en el aspecto seleccionado
+                                    const isInSelectedAspect = planetsInSelectedAspect.includes(planet.name);
+                                    
+                                    // Determinar clase CSS para dignidad
+                                    let dignityClass = '';
+                                    if (planet.dignidad) {
+                                        dignityClass = `dignity-${planet.dignidad}`;
+                                    }
+                                    
+                                    // Determinar símbolo para retrógrado
+                                    let retroSymbol = '';
+                                    if (planet.motion_status === 'retrograde') {
+                                        retroSymbol = ' <span class="retrograde">℞</span>';
+                                    } else if (planet.motion_status === 'stationary_retrograde') {
+                                        retroSymbol = ' <span class="stationary-retrograde">Sr</span>';
+                                    } else if (planet.motion_status === 'stationary_direct') {
+                                        retroSymbol = ' <span class="stationary-direct">Sd</span>';
+                                    }
+                                    
+                                    return (
+                                        <div 
+                                            key={planet.name}
+                                            className="planet-list-item"
+                                            style={{
+                                                backgroundColor: (selectedPlanet === planet.name || isInSelectedAspect) ? '#f0f0f0' : 'transparent',
+                                                fontWeight: (selectedPlanet === planet.name || isInSelectedAspect) ? 'bold' : 'normal'
+                                            }}
+                                            onClick={() => handlePlanetClick(planet.name)}
+                                        >
+                                            <strong>{PLANET_SYMBOLS[planet.name]}</strong>
+                                            <span dangerouslySetInnerHTML={{__html: retroSymbol}} />
+                                            {': '} 
+                                            {planet.sign} {convertirGradosZodiacales(planet.longitude, planet.sign)} 
+                                            {planet.house !== undefined && ` - Casa ${planet.house}`} 
+                                            <span className={dignityClass}>{planet.dignidad ? ` (${DIGNIDAD_LABELS[planet.dignidad]})` : ''}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            
+                            {/* Columna 2: Planetas en Tránsito (si están activos) */}
+                            {showTransits && transitPlanets.length > 0 ? (
+                                <div className="planets-column">
+                                    <h3>Planetas en Tránsito</h3>
+                                    {transitPlanets.map(planet => {
+                                        // Determinar si el planeta está involucrado en el aspecto seleccionado
+                                        const isInSelectedAspect = selectedAspect && 
+                                                                selectedAspect.isInterChart && 
+                                                                selectedAspect.planet2 === planet.name;
+                                        
+                                        // Determinar clase CSS para dignidad
+                                        let dignityClass = '';
+                                        if (planet.dignidad) {
+                                            dignityClass = `dignity-${planet.dignidad}`;
+                                        }
+                                        
+                                        // Determinar símbolo para retrógrado
+                                        let retroSymbol = '';
+                                        if (planet.motion_status === 'retrograde') {
+                                            retroSymbol = ' <span class="retrograde">℞</span>';
+                                        } else if (planet.motion_status === 'stationary_retrograde') {
+                                            retroSymbol = ' <span class="stationary-retrograde">Sr</span>';
+                                        } else if (planet.motion_status === 'stationary_direct') {
+                                            retroSymbol = ' <span class="stationary-direct">Sd</span>';
+                                        }
+                                        
+                                        return (
+                                            <div 
+                                                key={`transit_${planet.name}`}
+                                                className="planet-list-item"
+                                                style={{
+                                                    backgroundColor: (selectedPlanet === planet.name + '_transit' || isInSelectedAspect) ? '#f0f0f0' : 'transparent',
+                                                    fontWeight: (selectedPlanet === planet.name + '_transit' || isInSelectedAspect) ? 'bold' : 'normal'
+                                                }}
+                                                onClick={() => handlePlanetClick(planet.name + '_transit')}
+                                            >
+                                                <strong>{PLANET_SYMBOLS[planet.name]}</strong>
+                                                <span dangerouslySetInnerHTML={{__html: retroSymbol}} />
+                                                {': '} 
+                                                {planet.sign} {convertirGradosZodiacales(planet.longitude, planet.sign)} 
+                                                <span className={dignityClass}>{planet.dignidad ? ` (${DIGNIDAD_LABELS[planet.dignidad]})` : ''}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : null}
+                            
+                            {/* Columna 3: Estrellas Fijas */}
+                            <div className="planets-column">
+                                <h3>Estrellas Fijas</h3>
+                                {(showTransits ? transitActiveStars : activeStars).length > 0 ? 
+                                    (showTransits ? transitActiveStars : activeStars).map((star, index) => {
+                                        const currentLongitude = getCurrentStarPosition(star, showTransits ? transitDate : date);
+                                        const conjunctPlanets = findConjunctPlanets(star, showTransits ? transitPlanets : planets, showTransits ? transitDate : date);
+                                        return (
+                                            <div 
+                                                key={`${showTransits ? 'transit-' : ''}star-${index}`}
+                                                className="planet-list-item"
+                                                onClick={() => handleStarClick(star)}
+                                                style={{cursor: 'pointer'}}
+                                            >
+                                                <span className="star-symbol">★</span> {star.name} ({currentLongitude.toFixed(2)}°)
+                                                <br/>
+                                                <small>
+                                                    Conjunción con: {conjunctPlanets.map(p => 
+                                                        `${PLANET_SYMBOLS[p.name]} (${p.diff}°)`
+                                                    ).join(', ')}
+                                                </small>
+                                            </div>
+                                        );
+                                    })
+                                    :
+                                    <div>No hay estrellas fijas en conjunción con planetas.</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="right-section">
+                        {/* Mostrar aspectos relevantes */}
+                        <div className="aspects-container">
+                            <h3>Aspectos {showTransits ? 'Tránsito/Natal' : 'Relevantes'}</h3>
+                            {showTransits ? 
+                                // Mostrar aspectos entre tránsitos y carta natal
+                                relevantInterChartAspects.map((aspect, index) => {
+                                    const aspectName = ASPECTS[aspect.type]?.name || aspect.type;
+                                    
+                                    // Destacar aspectos cuando el planeta está seleccionado
+                                    const isHighlighted = 
+                                        selectedAspect === aspect || 
+                                        (selectedPlanet === aspect.planet1) || 
+                                        (transitPlanetName === aspect.planet2);
+                                    
+                                    return (
+                                        <div 
+                                            key={`inter-aspect-${index}`} 
+                                            className="aspect-list-item"
+                                            style={{
+                                                backgroundColor: isHighlighted ? '#f0f0f0' : 'transparent',
+                                                fontWeight: isHighlighted ? 'bold' : 'normal'
+                                            }}
+                                            onClick={() => handleAspectClick(aspect)}
+                                        >
+                                            {PLANET_SYMBOLS[aspect.planet1]} (natal) {aspectName} {PLANET_SYMBOLS[aspect.planet2]} (tránsito) ({aspect.angle.toFixed(2)}°)
+                                        </div>
+                                    );
+                                })
+                                : 
+                                // Mostrar aspectos de la carta natal
+                                relevantAspects.map((aspect, index) => {
+                                    const planet1 = planets.find(p => p.name === aspect.planet1);
+                                    const planet2 = planets.find(p => p.name === aspect.planet2);
+                                    
+                                    if (!planet1 || !planet2) return null;
+                                    
+                                    const aspectName = ASPECTS[aspect.type]?.name || aspect.type;
+                                    const isHighlighted = selectedAspect === aspect || 
+                                        (selectedPlanet && (aspect.planet1 === selectedPlanet || aspect.planet2 === selectedPlanet));
+                                    
+                                    return (
+                                        <div 
+                                            key={`aspect-desc-${index}`} 
+                                            className="aspect-list-item"
+                                            style={{
+                                                backgroundColor: isHighlighted ? '#f0f0f0' : 'transparent',
+                                                fontWeight: isHighlighted ? 'bold' : 'normal'
+                                            }}
+                                            onClick={() => handleAspectClick(aspect)}
+                                        >
+                                            {PLANET_SYMBOLS[aspect.planet1]} {aspectName} {PLANET_SYMBOLS[aspect.planet2]} ({aspect.angle.toFixed(2)}°)
+                                        </div>
+                                    );
+                                })
+                            }
+                        </div>
+
+                        {/* Sección de interpretaciones */}
+                        <div className="interpretations-container">
+                            {/* Pestañas para cambiar entre natal y tránsitos */}
+                            {showTransits && transitPlanets.length > 0 ? (
+                                <div className="tab-container">
+                                    <div 
+                                        className={`tab ${activeTab === 'natal' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('natal')}
+                                    >
+                                        Carta Natal
+                                    </div>
+                                    <div 
+                                        className={`tab ${activeTab === 'transit' ? 'active' : ''}`}
+                                        onClick={() => setActiveTab('transit')}
+                                    >
+                                        Tránsitos
+                                    </div>
+                                </div>
+                            ) : null}
+                            
+                            {/* Interpretaciones de la carta natal */}
+                            {(!showTransits || activeTab === 'natal') && interpretations && (
+                                <>
+                                    <div className="interpretation-section">
+                                        <h3>Planetas en Signos</h3>
+                                        {interpretations.planets_in_signs.map((interp, index) => (
+                                            <div key={`sign-${index}`} className="interpretation-item">
+                                                <div className="interpretation-title">
+                                                    {PLANET_SYMBOLS[interp.planet]} en {interp.sign}
+                                                </div>
+                                                {interp.interpretation.physical && (
+                                                    <div className="physical-plane">
+                                                        <div className="plane-title">Plano Físico:</div>
+                                                        <div className="interpretation-content">
+                                                            {interp.interpretation.physical}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {interp.interpretation.astral && (
+                                                    <div className="astral-plane">
+                                                        <div className="plane-title">Plano Astral:</div>
+                                                        <div className="interpretation-content">
+                                                            {interp.interpretation.astral}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="interpretation-section">
+                                        <h3>Planetas en Casas</h3>
+                                        {interpretations.planets_in_houses.map((interp, index) => (
+                                            <div key={`house-${index}`} className="interpretation-item">
+                                                <div className="interpretation-title">
+                                                    {PLANET_SYMBOLS[interp.planet]} en Casa {interp.house}
+                                                </div>
+                                                <div className="interpretation-content">{interp.interpretation}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="interpretation-section">
+                                        <h3>Aspectos</h3>
+                                        {interpretations.aspects.map((interp, index) => (
+                                            <div key={`aspect-${index}`} className="interpretation-item">
+                                                <div className="interpretation-title">
+                                                    {interp.planets} - {interp.type}
+                                                </div>
+                                                <div className="interpretation-content">{interp.interpretation}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="interpretation-section">
+                                        <h3>Regentes de Casas</h3>
+                                        {interpretations.house_rulers.map((interp, index) => (
+                                            <div key={`ruler-${index}`} className="interpretation-item">
+                                                <div className="interpretation-title">
+                                                    Regente {interp.ruler_type} de Casa {interp.house} ({interp.ruler}) 
+                                                    en Casa {interp.ruler_house}
+                                                </div>
+                                                <div className="interpretation-content">{interp.interpretation}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                            
+                            {/* Interpretaciones de tránsitos */}
+                            {showTransits && activeTab === 'transit' && transitInterpretations && (
+                                <>
+                                    <div className="interpretation-section">
+                                        <h3>Planetas en Tránsito en Signos</h3>
+                                        {transitInterpretations.planets_in_signs.map((interp, index) => (
+                                            <div key={`transit-sign-${index}`} className="interpretation-item">
+                                                <div className="interpretation-title">
+                                                    {PLANET_SYMBOLS[interp.planet]} en {interp.sign} (Tránsito)
+                                                </div>
+                                                {interp.interpretation.physical && (
+                                                    <div className="physical-plane">
+                                                        <div className="plane-title">Plano Físico:</div>
+                                                        <div className="interpretation-content">
+                                                            {interp.interpretation.physical}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {interp.interpretation.astral && (
+                                                    <div className="astral-plane">
+                                                        <div className="plane-title">Plano Astral:</div>
+                                                        <div className="interpretation-content">
+                                                            {interp.interpretation.astral}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="interpretation-section">
+                                        <h3>Aspectos entre Tránsitos</h3>
+                                        {transitInterpretations.aspects.map((interp, index) => (
+                                            <div key={`transit-aspect-${index}`} className="interpretation-item">
+                                                <div className="interpretation-title">
+                                                    {interp.planets} (Tránsito) - {interp.type}
+                                                </div>
+                                                <div className="interpretation-content">{interp.interpretation}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Esta función es necesaria para mostrar los grados dentro del signo
+function convertirGradosZodiacales(longitud, signo) {
+    // Definición de los límites de cada signo
+    const limites = {
+        "ARIES": { inicio: 354, fin: 30, cruza0: true },
+        "TAURO": { inicio: 30, fin: 60, cruza0: false },
+        "GÉMINIS": { inicio: 60, fin: 90, cruza0: false },
+        "CÁNCER": { inicio: 90, fin: 120, cruza0: false },
+        "LEO": { inicio: 120, fin: 150, cruza0: false },
+        "VIRGO": { inicio: 150, fin: 186, cruza0: false },
+        "LIBRA": { inicio: 186, fin: 210, cruza0: false },
+        "ESCORPIO": { inicio: 210, fin: 240, cruza0: false },
+        "OFIUCO": { inicio: 240, fin: 252, cruza0: false },
+        "SAGITARIO": { inicio: 252, fin: 270, cruza0: false },
+        "CAPRICORNIO": { inicio: 270, fin: 306, cruza0: false },
+        "ACUARIO": { inicio: 306, fin: 324, cruza0: false },
+        "PEGASO": { inicio: 324, fin: 330, cruza0: false },
+        "PISCIS": { inicio: 330, fin: 354, cruza0: false }
+    };
+    
+    // Verificar si el signo existe en nuestro diccionario
+    if (!limites[signo]) {
+        return "0° 00'";
+    }
+    
+    const limite = limites[signo];
+    longitud = parseFloat(longitud) % 360;
+    
+    // Calcular los grados dentro del signo
+    let gradosEnSigno;
+    
+    if (limite.cruza0 && longitud < limite.inicio && longitud < limite.fin) {
+        // Caso especial: Aries cuando la longitud está entre 0° y 30°
+        gradosEnSigno = longitud + (360 - limite.inicio);
+    } else if (limite.cruza0 && longitud >= limite.inicio) {
+        // Caso especial: Aries cuando la longitud está entre 354° y 360°
+        gradosEnSigno = longitud - limite.inicio;
+    } else {
+        // Caso normal para otros signos
+        gradosEnSigno = longitud - limite.inicio;
+    }
+    
+    // Asegurarse de que los grados están dentro del rango correcto
+    if (gradosEnSigno < 0) gradosEnSigno += 360;
+    
+    // Convertir a grados y minutos
+    const grados = Math.floor(gradosEnSigno);
+    const minutos = Math.floor((gradosEnSigno - grados) * 60);
+    
+    // Devolver en formato "X° YY'"
+    return `${grados}° ${minutos.toString().padStart(2, '0')}'`;
+}
+
+console.log("Script iniciando...");
+
+// Verificar que React está cargado
+console.log("React:", typeof React);
+console.log("ReactDOM:", typeof ReactDOM);
+
+// Verificar que el elemento root existe
+const rootElement = document.getElementById("root");
+console.log("Elemento root:", rootElement);
+
+// Siempre crear un nuevo root y renderizar
+console.log("Creando nuevo root de React...");
+try {
+    const root = ReactDOM.createRoot(rootElement);
+    console.log("Renderizando App...");
+    root.render(<App />);
+    console.log("App renderizada");
+} catch (error) {
+    console.error("Error al renderizar App:", error);
+}
+    </script>
+</body>
+</html>
