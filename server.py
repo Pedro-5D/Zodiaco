@@ -100,7 +100,7 @@ DIGNIDADES = {
     },
     'SATURNO': {
         'domicilio': ['LEO', 'ARIES', 'LIBRA', 'ACUARIO'], 
-        'exaltacion': ['OFIUCO', 'GÉMINIS'], 
+        'exaltacion': ['OFIUCO', 'GÉMINIS', 'SAGITARIO'], 
         'caida': ['TAURO', 'ESCORPIO', 'PEGASO'], 
         'exilio': ['CÁNCER', 'PISCIS', 'CAPRICORNIO', 'VIRGO']
     },
